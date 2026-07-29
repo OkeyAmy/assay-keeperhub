@@ -17,7 +17,7 @@
     "@assay/config": "workspace:*",
     "@assay/core": "workspace:*",
     "@assay/observer": "workspace:*",
-    "next": "16.2.9",
+    "next": "16.2.12",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "viem": "^2.52.2"
