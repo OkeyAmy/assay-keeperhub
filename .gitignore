@@ -198,9 +198,11 @@ wallet*.json
 .claude/
 .remember/
 
-# Internal strategy notes: competitive analysis and planning, not product docs.
+# Internal strategy notes: competitive analysis, planning, presentation prep.
+# Not product documentation — these are for me, not for a reader of the repo.
 idea.md
 claude.md
+docs/DEMO.md
 
 # Foundry writes deployment history and a cache it labels "sensitive values"
 # to these paths. Neither belongs in a public repo.
