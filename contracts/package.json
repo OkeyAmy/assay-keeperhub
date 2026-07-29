@@ -1,0 +1,24 @@
+{
+  "name": "@assay/contracts",
+  "version": "0.1.0",
+  "description": "IntentRegistry and ReceiptRegistry — pre-execution commitments and hash-chained verification receipts",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "forge build --config-path foundry.toml",
+    "test": "forge test --config-path foundry.toml -vv",
+    "test:foundry": "forge test --config-path foundry.toml -vv",
+    "test:gas": "forge test --config-path foundry.toml --gas-report",
+    "fmt": "forge fmt",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf artifacts artifacts-foundry cache .turbo",
+    "deploy": "forge script script/Deploy.s.sol:Deploy --rpc-url $DEPLOY_RPC_URL --broadcast -vvv",
+    "deploy:verify": "forge script script/Deploy.s.sol:Deploy --rpc-url $DEPLOY_RPC_URL --broadcast --verify -vvv"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3",
+    "forge-std": "github:foundry-rs/forge-std#v1.16.1",
+    "typescript": "^6.0.3"
+  }
+}

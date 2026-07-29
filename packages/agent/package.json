@@ -1,0 +1,26 @@
+{
+  "name": "@assay/agent",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "The commit -> execute -> reconcile -> receipt cycle, plus policy guards and swappable strategies.",
+  "license": "Apache-2.0",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./cycle": "./src/cycle.ts",
+    "./policy": "./src/policy.ts",
+    "./registries": "./src/registries.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "@assay/config": "workspace:*",
+    "@assay/core": "workspace:*",
+    "@assay/keeperhub": "workspace:*",
+    "@assay/observer": "workspace:*",
+    "viem": "^2.52.2"
+  }
+}

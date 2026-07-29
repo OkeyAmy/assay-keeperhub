@@ -1,0 +1,57 @@
+name: checks
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  verify:
+    name: Boundaries, tests, gauntlet
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.20.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # The product's central claim, enforced structurally: the reconciler and
+      # the observer must be unable to read through the party they verify, and
+      # nothing outside @assay/keeperhub may submit a transaction.
+      - name: Module boundaries
+        run: pnpm lint:boundaries
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: TypeScript tests
+        run: pnpm test
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Solidity tests
+        run: pnpm test:contracts
+
+      # Four scenarios where a naive integration reports success. Runs without
+      # credentials, so it gates every commit rather than only the demo.
+      - name: Failure gauntlet
+        run: pnpm gauntlet
+
+      # Talks to real public RPC endpoints. Allowed to fail, since a public
+      # endpoint being down is not a defect in this repository.
+      - name: Live observer check
+        run: pnpm live:observer
+        continue-on-error: true

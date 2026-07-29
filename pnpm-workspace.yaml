@@ -1,0 +1,13 @@
+packages:
+  - 'packages/*'
+  - 'apps/*'
+  - 'contracts'
+
+# Native/build-heavy deps that need to run install scripts under pnpm's
+# strict-by-default policy.
+onlyBuiltDependencies:
+  - esbuild
+  - '@tailwindcss/oxide'
+  - sharp
+  - keccak
+  - secp256k1

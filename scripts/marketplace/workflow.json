@@ -1,0 +1,80 @@
+{
+  "name": "Assay \u2014 Verify an Agent Commitment",
+  "description": "Independent verification for onchain agents. Given an intent hash, reports whether the agent committed to that action onchain BEFORE it executed, and returns the verifier's full public verdict record \u2014 how many of its executions were VERIFIED, DIVERGENT, UNPROVEN or NOT_EXECUTED. Reads contract state directly; no trust in the executor's own report.",
+  "_comment_enabled": "Workflows are created dormant. A listed workflow that is not enabled answers callers with 503, so publishing without this is publishing nothing. Safe here because the trigger is Manual: enabling makes it callable, it does not start a schedule.",
+  "enabled": true,
+  "nodes": [
+    {
+      "id": "trigger-1",
+      "type": "trigger",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "type": "trigger",
+        "label": "Trigger",
+        "status": "idle",
+        "config": {
+          "triggerType": "Manual"
+        }
+      }
+    },
+    {
+      "id": "step-1",
+      "type": "action",
+      "position": {
+        "x": 252,
+        "y": 0
+      },
+      "data": {
+        "type": "action",
+        "label": "Check Intent Commitment",
+        "status": "idle",
+        "description": "Was this exact action committed onchain before it was executed? An execution with no prior commitment cannot be held to anything.",
+        "config": {
+          "actionType": "web3/read-contract",
+          "network": "11155111",
+          "contractAddress": "0x75Fd7a39c85E34EFaD09EbCE39dc0d0e4AE4E561",
+          "abiFunction": "isCommitted",
+          "abi": "[{\"type\":\"function\",\"name\":\"isCommitted\",\"stateMutability\":\"view\",\"inputs\":[{\"name\":\"intentHash\",\"type\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}]}]",
+          "functionArgs": "[\"{{@trigger-1:Trigger.intentHash}}\"]"
+        }
+      }
+    },
+    {
+      "id": "step-2",
+      "type": "action",
+      "position": {
+        "x": 504,
+        "y": 0
+      },
+      "data": {
+        "type": "action",
+        "label": "Read Verifier Record",
+        "status": "idle",
+        "description": "The verifier's public tally. A verifier that has only ever reported VERIFIED is itself a finding.",
+        "config": {
+          "actionType": "web3/read-contract",
+          "network": "11155111",
+          "contractAddress": "0x3a5D1FC35736Bdb1656bb35Ce1503B62FAa5d4cA",
+          "abiFunction": "summary",
+          "abi": "[{\"type\":\"function\",\"name\":\"summary\",\"stateMutability\":\"view\",\"inputs\":[{\"name\":\"verifier\",\"type\":\"address\"}],\"outputs\":[{\"name\":\"verified\",\"type\":\"uint256\"},{\"name\":\"divergent\",\"type\":\"uint256\"},{\"name\":\"unproven\",\"type\":\"uint256\"},{\"name\":\"notExecuted\",\"type\":\"uint256\"}]}]",
+          "functionArgs": "[\"{{@trigger-1:Trigger.verifier}}\"]"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "trigger-1",
+      "target": "step-1"
+    },
+    {
+      "id": "e2",
+      "source": "step-1",
+      "target": "step-2"
+    }
+  ]
+}

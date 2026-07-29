@@ -1,0 +1,26 @@
+# Only the dashboard deploys; everything else is build-time or local.
+contracts/
+scripts/
+packages/*/test/
+.git/
+node_modules/
+.turbo/
+.next/
+dist/
+coverage/
+
+# Never ship secrets or local state.
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.pem
+*.key
+*.p8
+*.p12
+keystore/
+wallet*.json
+.remember/
+.claude/

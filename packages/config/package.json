@@ -1,0 +1,24 @@
+{
+  "name": "@assay/config",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Environment and chain configuration. The only module allowed to read process.env.",
+  "license": "Apache-2.0",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./chains": "./src/chains.ts",
+    "./dotenv": "./src/dotenv.ts",
+    "./net": "./src/net.ts",
+    "./env": "./src/env.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "viem": "^2.52.2"
+  }
+}

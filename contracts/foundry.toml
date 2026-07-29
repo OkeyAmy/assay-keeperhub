@@ -1,0 +1,26 @@
+[profile.default]
+src = "src"
+test = "test"
+script = "script"
+out = "artifacts-foundry"
+cache_path = "cache/foundry"
+solc_version = "0.8.35"
+via_ir = true
+optimizer = true
+optimizer_runs = 200
+
+# forge-std is installed through pnpm rather than `forge install`, because this
+# project is not a git repo and `forge install` requires submodules.
+allow_paths = ["node_modules", "../node_modules"]
+remappings = ["forge-std/=node_modules/forge-std/src/"]
+
+[invariant]
+runs = 256
+depth = 128
+fail_on_revert = false
+
+[fuzz]
+runs = 1000
+
+[profile.ci.fuzz]
+runs = 5000

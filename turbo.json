@@ -1,0 +1,61 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": [".env", "**/.env.*local"],
+  "globalEnv": [
+    "CHAIN_ID",
+    "PAYMENT_CHAIN_ID",
+    "KH_API_BASE",
+    "KH_MCP_URL",
+    "KH_API_KEY",
+    "KH_MARKETPLACE_SLUG",
+    "RPC_URLS",
+    "OBSERVER_QUORUM",
+    "OBSERVER_TIMEOUT_MS",
+    "BLOCKSCOUT_URL",
+    "INTENT_REGISTRY",
+    "RECEIPT_REGISTRY",
+    "MAX_EXECUTIONS_PER_DAY",
+    "MAX_VALUE_PER_TX",
+    "INTENT_TTL_SECONDS",
+    "MAX_ATTEMPTS",
+    "TICK_INTERVAL_MS",
+    "KILL_SWITCH",
+    "LLM_API_KEY",
+    "LLM_BASE_URL",
+    "LLM_MODEL",
+    "ORG_WALLET_ADDRESS",
+    "STRATEGY_TOKEN",
+    "STRATEGY_RECIPIENT",
+    "STRATEGY_AMOUNT",
+    "STRATEGY_MIN_BALANCE",
+    "STRATEGY_MAX_GAS"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+    },
+    "@assay/contracts#build": {
+      "dependsOn": [],
+      "outputs": ["artifacts/**", "artifacts-foundry/**", "src/generated/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "lint": {
+      "outputs": []
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "clean": {
+      "cache": false
+    }
+  }
+}

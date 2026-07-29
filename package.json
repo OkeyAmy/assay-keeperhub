@@ -1,0 +1,56 @@
+{
+  "name": "assay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.20.0",
+  "description": "Proof of execution for onchain agents \u2014 commit intent, execute via KeeperHub, reconcile independently, receipt onchain",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "pnpm --filter @assay/dashboard run dev",
+    "agent": "pnpm --filter @assay/runner run start",
+    "agent:once": "pnpm --filter @assay/runner run once",
+    "doctor": "pnpm --filter @assay/runner run doctor",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:contracts": "pnpm --filter @assay/contracts run test:foundry",
+    "test:all": "pnpm run test && pnpm run test:contracts",
+    "lint": "turbo run lint",
+    "lint:boundaries": "node scripts/check-boundaries.mjs",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean",
+    "format": "prettier --write \"**/*.{ts,tsx,sol,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,sol,json,md}\"",
+    "gauntlet": "tsx scripts/gauntlet/index.ts",
+    "live:observer": "tsx scripts/live/observer-check.ts",
+    "verify": "pnpm lint:boundaries && pnpm test && pnpm test:contracts && pnpm gauntlet",
+    "marketplace:publish": "tsx scripts/marketplace/publish.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.5",
+    "@vitest/coverage-v8": "^3.2.4",
+    "prettier": "^3.8.4",
+    "prettier-plugin-solidity": "^2.3.1",
+    "tsx": "^4.22.4",
+    "turbo": "^2.9.18",
+    "typescript": "^6.0.3",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "@assay/config": "workspace:*",
+    "@assay/core": "workspace:*",
+    "@assay/observer": "workspace:*",
+    "viem": "^2.52.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "@noble/curves": "^1.9.7",
+      "@noble/hashes": "^1.8.0",
+      "viem": "^2.52.2"
+    }
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  }
+}

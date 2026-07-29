@@ -1,0 +1,30 @@
+{
+  "name": "@assay/mcp",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "description": "MCP server exposing Assay verification to any agent.",
+  "license": "Apache-2.0",
+  "bin": { "assay-mcp": "./src/index.ts" },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "start": "tsx src/index.ts",
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "@assay/agent": "workspace:*",
+    "@assay/config": "workspace:*",
+    "@assay/core": "workspace:*",
+    "@assay/keeperhub": "workspace:*",
+    "@assay/observer": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "viem": "^2.52.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}

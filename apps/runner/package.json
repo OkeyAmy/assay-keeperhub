@@ -1,0 +1,30 @@
+{
+  "name": "@assay/runner",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "description": "Long-running Assay agent: commit, execute, reconcile, receipt — on a loop.",
+  "license": "Apache-2.0",
+  "bin": { "assay": "./src/cli.ts" },
+  "scripts": {
+    "watch": "tsx watch src/cli.ts run",
+    "start": "tsx src/cli.ts run",
+    "doctor": "tsx src/cli.ts doctor",
+    "once": "tsx src/cli.ts once",
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "@assay/agent": "workspace:*",
+    "@assay/config": "workspace:*",
+    "@assay/core": "workspace:*",
+    "@assay/keeperhub": "workspace:*",
+    "@assay/observer": "workspace:*",
+    "viem": "^2.52.2"
+  },
+  "devDependencies": {
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}

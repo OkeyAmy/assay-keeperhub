@@ -1,0 +1,25 @@
+{
+  "name": "@assay/keeperhub",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "KeeperHub Direct Execution + executions API adapter. The only module in the repo permitted to submit transactions.",
+  "license": "Apache-2.0",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./execute": "./src/execute.ts",
+    "./audit": "./src/audit.ts",
+    "./retry": "./src/retry.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "@assay/config": "workspace:*",
+    "@assay/core": "workspace:*",
+    "viem": "^2.52.2"
+  }
+}
