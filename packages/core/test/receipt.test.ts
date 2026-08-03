@@ -15,10 +15,11 @@ import {
   GENESIS_LINK,
   hashReason,
   hashReceipt,
+  reasonFromHash,
   ZERO_HASH,
   type Receipt,
 } from '../src/receipt.js';
-import { VERDICT_CODE, verdictFromCode, type Verdict } from '../src/verdict.js';
+import { VERDICT_CODE, VERDICT_REASONS, verdictFromCode, type Verdict } from '../src/verdict.js';
 
 function receipt(overrides: Partial<Receipt> = {}): Receipt {
   return {
@@ -179,5 +180,38 @@ describe('verdict codes', () => {
     // blindfold: contract — ReceiptRegistry.write rejects verdict 0 and >4, so the decoder must agree
     expect(() => verdictFromCode(0)).toThrow();
     expect(() => verdictFromCode(9)).toThrow();
+  });
+});
+
+describe('reason hashes', () => {
+  it('decodes the reason stored on a live Sepolia receipt', () => {
+    // blindfold: golden — `cast keccak "ALL_CHECKS_PASSED"`, and the same value
+    // appears as `reasonHash` on receipt 0xe4998ea2… in the deployed registry.
+    const onchain = '0x6aca5744d13948515424bd3e93b69fdadbc2937e61c0e852b32df0cbda6e5c96';
+    expect(hashReason('ALL_CHECKS_PASSED')).toBe(onchain);
+    expect(reasonFromHash(onchain)).toBe('ALL_CHECKS_PASSED');
+  });
+
+  it('round-trips every reason in the enum', () => {
+    // blindfold: invariant — the mapping is an inversion of a closed set, so it
+    // must be total. A reason added to the union but not to VERDICT_REASONS
+    // fails the build; this catches a hashing change instead.
+    for (const reason of VERDICT_REASONS) {
+      expect(reasonFromHash(hashReason(reason))).toBe(reason);
+    }
+  });
+
+  it('reports an unrecognised hash as unknown rather than guessing', () => {
+    // blindfold: contract — a receipt from a different or newer verifier may
+    // carry a reason this build has never heard of. Inventing a nearest match
+    // there would be the exact failure this project exists to catch.
+    expect(reasonFromHash(keccak256(stringToHex('NOT_A_REAL_REASON')))).toBeUndefined();
+  });
+
+  it('accepts a hash in either case', () => {
+    // blindfold: contract — hashes arrive from RPC providers and explorers that
+    // disagree about hex casing; the lookup is documented as case-insensitive.
+    const upper = hashReason('CALLDATA_MISMATCH').toUpperCase().replace('0X', '0x') as Hex;
+    expect(reasonFromHash(upper)).toBe('CALLDATA_MISMATCH');
   });
 });

@@ -1,5 +1,5 @@
 import { encodeAbiParameters, keccak256, parseAbiParameters, stringToHex, type Hex } from 'viem';
-import { VERDICT_CODE, type Verdict } from './verdict.js';
+import { VERDICT_CODE, VERDICT_REASONS, type Verdict, type VerdictReason } from './verdict.js';
 
 /** The zero hash, used as the previous link of the first receipt in a chain. */
 export const GENESIS_LINK = `0x${'00'.repeat(32)}` as Hex;
@@ -42,6 +42,29 @@ export function buildReceipt(verdict: Verdict, prevHash: Hex = GENESIS_LINK): Re
 
 export function hashReason(reason: string): Hex {
   return keccak256(stringToHex(reason));
+}
+
+/**
+ * Reason codes keyed by their hash, so a stored receipt can say why.
+ *
+ * Receipts store `keccak(reason)` rather than the string, which keeps them
+ * cheap onchain but leaves a reader holding 32 opaque bytes. The reason set is
+ * a closed enum, so the mapping inverts exactly — no guessing, and anyone can
+ * reproduce it with `cast keccak "<REASON>"`.
+ */
+const REASON_BY_HASH: ReadonlyMap<string, VerdictReason> = new Map(
+  VERDICT_REASONS.map((reason) => [hashReason(reason).toLowerCase(), reason]),
+);
+
+/**
+ * Recover a reason code from its hash.
+ *
+ * Returns undefined for a hash that matches no known reason — which is a real
+ * possibility for a receipt written by a different or newer verifier, and is
+ * reported as unknown rather than guessed at.
+ */
+export function reasonFromHash(reasonHash: Hex): VerdictReason | undefined {
+  return REASON_BY_HASH.get(reasonHash.toLowerCase());
 }
 
 /**

@@ -40,6 +40,46 @@ export type VerdictReason =
   | 'BALANCE_SNAPSHOT_MISSING'
   | 'RELAYED_EFFECT_UNDECLARED';
 
+/**
+ * Every reason, as runtime data.
+ *
+ * `VerdictReason` is a union, so it does not survive compilation — but a
+ * receipt stores only `keccak(reason)`, and turning that back into something a
+ * reader can act on needs the candidate list at runtime. The guard below fails
+ * the build if a reason is added to the union and not to this array, so the two
+ * cannot drift apart silently.
+ */
+export const VERDICT_REASONS = [
+  'ALL_CHECKS_PASSED',
+  'NO_EXECUTION_ATTEMPTED',
+  'SIMULATION_REJECTED',
+  'INTENT_EXPIRED',
+  'CALLDATA_MISMATCH',
+  'TARGET_MISMATCH',
+  'VALUE_MISMATCH',
+  'CHAIN_MISMATCH',
+  'SENDER_MISMATCH',
+  'BALANCE_DELTA_OUT_OF_BOUNDS',
+  'REQUIRED_EVENT_MISSING',
+  'GAS_EXCEEDED_BOUND',
+  'REVERTED_BUT_REPORTED_SUCCESS',
+  'NO_STATE_CHANGE_ON_SUCCESS',
+  'IDEMPOTENCY_WEDGE',
+  'TX_HASH_ABSENT',
+  'TX_NOT_FOUND_ONCHAIN',
+  'TX_NOT_MINED_YET',
+  'OBSERVER_UNAVAILABLE',
+  'OBSERVER_QUORUM_FAILED',
+  'AUDIT_TRAIL_INCOMPLETE',
+  'BALANCE_SNAPSHOT_MISSING',
+  'RELAYED_EFFECT_UNDECLARED',
+] as const satisfies readonly VerdictReason[];
+
+/** Compile-time proof that `VERDICT_REASONS` covers the whole union. */
+type UncoveredReason = Exclude<VerdictReason, (typeof VERDICT_REASONS)[number]>;
+const _everyReasonIsListed: UncoveredReason extends never ? true : never = true;
+void _everyReasonIsListed;
+
 export interface CheckResult {
   name: 'existence' | 'conformance' | 'effect' | 'liveness';
   passed: boolean;
