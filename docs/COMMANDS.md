@@ -9,8 +9,8 @@ Every command in the project, with what it actually does. Commands marked
 
 | Command | What it does |
 |---|---|
-| `pnpm verify` | **verified** — boundaries + 152 tests + gauntlet, in one gate |
-| `pnpm test` | **verified** — 117 TypeScript tests (Vitest) |
+| `pnpm verify` | **verified** — boundaries + 156 tests + gauntlet, in one gate |
+| `pnpm test` | **verified** — 121 TypeScript tests (Vitest) |
 | `pnpm test:contracts` | **verified** — 35 Solidity tests (Foundry) |
 | `pnpm test:watch` | Vitest in watch mode |
 | `pnpm lint:boundaries` | **verified** — enforces module independence |
@@ -22,7 +22,7 @@ Every command in the project, with what it actually does. Commands marked
 
 ```
 module boundaries intact:
-      Tests  117 passed (117)
+      Tests  121 passed (121)
 35 tests passed, 0 failed, 0 skipped (35 total tests)
 all 4 scenarios caught
 ```

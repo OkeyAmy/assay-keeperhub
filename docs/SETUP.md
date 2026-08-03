@@ -40,12 +40,12 @@ This needs **no credentials, no keys, no funds**:
 pnpm verify
 ```
 
-Runs, in order: module boundaries → 117 TypeScript tests → 35 Solidity tests →
+Runs, in order: module boundaries → 121 TypeScript tests → 35 Solidity tests →
 the four-scenario failure gauntlet. Expected tail:
 
 ```
 module boundaries intact:
-      Tests  117 passed (117)
+      Tests  121 passed (121)
 35 tests passed, 0 failed, 0 skipped (35 total tests)
 all 4 scenarios caught
 ```

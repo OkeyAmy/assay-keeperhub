@@ -58,13 +58,11 @@ not happen.
 
 ### The audit trail is the point
 
-As far as I can tell from surveying ~50 public repos tagged to this hackathon,
-**no other submission treats KeeperHub's execution logs as a first-class input.**
-Most build guardians that gate *before* execution. Assay is the only thing
-looking at what the executor *said afterwards* and checking it.
+Assay treats KeeperHub's execution logs as a first-class input rather than as
+logging. Most guardians gate *before* execution; Assay checks what the executor
+*said afterwards*, against an independent read of the chain.
 
-That is deliberate. It is the most differentiated surface available, and it is
-the one the rubric explicitly names.
+That is deliberate. It is the surface the rubric explicitly names.
 
 ---
 
@@ -124,7 +122,7 @@ spin forever.
 
 How Assay answers:
 
-- **Tests** — 152 (117 TypeScript + 35 Solidity, six fuzz suites at 1,000 runs).
+- **Tests** — 156 (121 TypeScript + 35 Solidity, six fuzz suites at 1,000 runs).
   See [TESTING.md](./TESTING.md).
 - **Module boundaries** — `@assay/core` is vendor-neutral and provably cannot
   reach an execution provider; `@assay/keeperhub` is the only module permitted to
@@ -162,7 +160,7 @@ That is the difference between a design principle and a comment.
 pnpm gauntlet          # four failure modes — no credentials
 pnpm live:observer     # real Sepolia reads through 3 providers — no credentials
 pnpm lint:boundaries   # the independence claim, mechanically
-pnpm verify            # all of it plus 152 tests
+pnpm verify            # all of it plus 156 tests
 ```
 
 And onchain, with nothing from this repo:

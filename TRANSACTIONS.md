@@ -31,13 +31,13 @@ cast call 0x3a5D1FC35736Bdb1656bb35Ce1503B62FAa5d4cA \
 
 | Verdict | Count |
 |---|---:|
-| VERIFIED | 3 |
+| VERIFIED | 20 |
 | DIVERGENT | 6 |
 | UNPROVEN | 4 |
 | NOT_EXECUTED | 0 |
-| **Total receipts (all verifiers)** | **13** |
+| **Total receipts (all verifiers)** | **30** |
 
-Chain head: `0xd0d442a24788b6d6e4b9eb3cc5e16cb1de6c742a267a0ca37a27a1a03bf664a0`
+Chain head: `0xe4998ea2c0a3d54ce8b3fad0e5a2038d92518e4d517d076a40e46e9caa1c497b`
 
 **This tally is deliberately not all `VERIFIED`.** The `DIVERGENT` and
 `UNPROVEN` entries are real findings from bringing the system up against live
@@ -67,7 +67,7 @@ registry directly:
 ```bash
 cast call 0x3a5D1FC35736Bdb1656bb35Ce1503B62FAa5d4cA \
   "chainFrom(bytes32,uint256)((bytes32,bytes32,uint8,bytes32,bytes32,uint64,address,uint64)[])" \
-  0xd0d442a24788b6d6e4b9eb3cc5e16cb1de6c742a267a0ca37a27a1a03bf664a0 20 \
+  0xe4998ea2c0a3d54ce8b3fad0e5a2038d92518e4d517d076a40e46e9caa1c497b 30 \
   --rpc-url https://ethereum-sepolia-rpc.publicnode.com
 ```
 
@@ -100,7 +100,7 @@ curl -s -X POST https://app.keeperhub.com/api/mcp/workflows/assay-verify/call \
 settled yet** — that requires a caller holding USDC on Base.
 
 A successful authenticated call (execution `erz8i6biue61wz3z13p77`) returned this
-deployment's real onchain record: `verified 3, divergent 6, unproven 4`.
+deployment's real onchain record: `verified 20, divergent 6, unproven 4`.
 
 KeeperHub also auto-registered this deployment on the ERC-8004 ReputationRegistry
 as agent [`31875`](https://8004scan.io/agents/ethereum/31875).

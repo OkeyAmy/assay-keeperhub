@@ -1,10 +1,10 @@
 # Testing
 
-**152 tests** — 117 TypeScript (Vitest) + 35 Solidity (Foundry). All green.
+**156 tests** — 121 TypeScript (Vitest) + 35 Solidity (Foundry). All green.
 
 ```
 Test Files  7 passed (7)
-     Tests  117 passed (117)
+     Tests  121 passed (121)
 
 Ran 2 test suites: 35 tests passed, 0 failed, 0 skipped (35 total tests)
 ```
@@ -21,7 +21,7 @@ executor's audit trail, and an independent chain observation. That is a
 deliberate design choice: it means **every failure mode the demo shows is also a
 unit test**, rather than something you have to take on faith from a video.
 
-### TypeScript — 117 tests
+### TypeScript — 121 tests
 
 | File | Tests | Covers |
 |---|---:|---|

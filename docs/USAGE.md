@@ -143,14 +143,23 @@ how many independent providers backed the conclusion:
 }
 ```
 
+`assay_verify` is the one tool that needs `KH_API_KEY`, because reading the
+executor's audit trail is the one thing only the executor can serve.
+
 ### The other tools
 
-| Tool | Use |
-|---|---|
-| `assay_hash_intent` | Canonical intent hash, for committing or comparing |
-| `assay_check_commitment` | Was this intent committed before execution? |
-| `assay_receipts` | A verifier's verdict tally and chain head |
-| `assay_status` | This deployment's chain, providers and registries |
+All four are chain reads and need **no KeeperHub account** — only `RPC_URLS`
+and the registry addresses, both pre-filled in `.env.example`. Requiring the
+executor's credentials in order to *read* would make the independent path
+depend on the party being verified, which is the circularity this project
+exists to avoid.
+
+| Tool | Use | Needs |
+|---|---|---|
+| `assay_hash_intent` | Canonical intent hash, for committing or comparing | nothing — pure function |
+| `assay_check_commitment` | Was this intent committed before execution? | `RPC_URLS` + `INTENT_REGISTRY` |
+| `assay_receipts` | A verifier's verdict tally and chain head | `RPC_URLS` + `RECEIPT_REGISTRY` |
+| `assay_status` | This deployment's chain, providers and registries | `RPC_URLS` |
 
 `assay_status` is the one to call first if you are evaluating whether to trust a
 given Assay deployment: it reports how many **independent** providers back the
@@ -160,14 +169,46 @@ read path, which is what makes a verdict non-circular.
 
 ## 4. The receipts explorer
 
+Live: **[assay-keeperhub.okeyamy.xyz](https://assay-keeperhub.okeyamy.xyz/)** —
+nothing to install. Or run the same code locally:
+
 ```bash
-pnpm --filter @assay/dashboard dev
+pnpm --filter @assay/dashboard dev      # http://localhost:3000
 ```
 
-http://localhost:3000 — verdict tallies, every receipt with its intent hash, tx
-link, and block. It reads the registry **directly from chain through the same
-independent RPC quorum**, with no indexer and no database: tamper-evidence is
+It reads the registry **directly from chain through the same independent RPC
+quorum** the verifier uses, with no indexer and no database: tamper-evidence is
 worthless if checking it requires trusting a server.
+
+### What each part tells you
+
+| Element | Reading it |
+|---|---|
+| Verdict cards | Tally for the whole chain, from the registry's own `summary(verifier)` counters — not a count of the visible page, so it does not shift as you page |
+| Reason code under each verdict | Decoded from the `reasonHash` stored onchain. `DIVERGENT` / `UNPROVEN` rows say *why* without a lookup |
+| **Verify this receipt yourself** | Expands to the receipt's hashes plus `cast` commands that reproduce the reading from chain, with nothing from this project involved |
+| Executed through KeeperHub | Names the org wallet that executed, and the two credential-free ways to exercise the deployment |
+| Independent RPC providers | How many agree on the chain tip right now, against the required quorum |
+
+### When rows are missing
+
+If the RPC quorum cannot read a receipt, the row is **left out and counted**,
+with a notice saying so. It is never filled in with a guess. Reload, or read the
+receipt directly:
+
+```bash
+cast call $RECEIPT_REGISTRY \
+  "chainFrom(bytes32,uint256)((bytes32,bytes32,uint8,bytes32,bytes32,uint64,address,uint64)[])" \
+  $CHAIN_HEAD 30 --rpc-url $RPC
+```
+
+### Configuration
+
+`RPC_URLS` and `RECEIPT_REGISTRY` are enough to render. Setting
+`ORG_WALLET_ADDRESS` as well lets the tally come from one `summary()` call
+instead of walking every receipt — much faster, and it labels the verifier on
+the page. All three are pre-filled in `.env.example`; on a hosted deployment set
+them in the host's environment, not in a committed file.
 
 ---
 
@@ -179,7 +220,7 @@ A verifier you cannot check is just another black box.
 pnpm lint:boundaries   # the reconciler structurally cannot read through KeeperHub
 pnpm gauntlet          # four failure modes, no credentials required
 pnpm live:observer     # the read path against a real chain, no credentials required
-pnpm verify            # all of the above plus 152 tests
+pnpm verify            # all of the above plus 156 tests
 ```
 
 Onchain, anyone can walk a verifier's receipt chain without this codebase:
