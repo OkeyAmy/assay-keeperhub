@@ -15,12 +15,45 @@
   box-sizing: border-box;
 }
 
+/* Static letterpress scanline — 1 px bright line every 4 px.
+   position:fixed so it covers the viewport regardless of scroll height.
+   No keyframes, no JS, no paint budget. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.028) 0px,
+    rgba(255, 255, 255, 0.028) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+}
+
+/* Vignette — pulls the eye inward, hides the hard viewport edge */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 110% 90% at 50% 30%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.52) 100%
+  );
+}
+
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  line-height: 1.55;
+  font-family: var(--font-mono, ui-monospace), 'SF Mono', Menlo, monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
 }
 
 main {
@@ -31,8 +64,24 @@ main {
 
 h1 {
   margin: 0 0 0.25rem;
-  font-size: 2rem;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display, Georgia), serif;
+  font-size: 2.5rem;
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  font-optical-sizing: auto;
+  line-height: 1.1;
+}
+
+/* Terminal prompt prefix — mono ">" in verified-green before the serif heading */
+h1::before {
+  content: '> ';
+  font-family: var(--font-mono, monospace);
+  font-size: 0.52em;
+  font-weight: 400;
+  color: var(--verified);
+  vertical-align: 0.18em;
+  opacity: 0.8;
+  letter-spacing: 0;
 }
 
 .tagline {
@@ -42,7 +91,7 @@ h1 {
 }
 
 code {
-  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-family: var(--font-mono, ui-monospace), monospace;
   font-size: 0.85em;
 }
 
@@ -65,38 +114,37 @@ a {
 .stat {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  border-radius: 0.4rem;
   padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.3rem;
 }
 
+.stat.verified  { border-left: 3px solid var(--verified); }
+.stat.divergent { border-left: 3px solid var(--divergent); }
+.stat.unproven  { border-left: 3px solid var(--unproven); }
+
 .stat-value {
-  font-size: 1.75rem;
-  font-weight: 600;
+  font-family: var(--font-display, Georgia), serif;
+  font-size: 2.25rem;
+  font-weight: 900;
+  font-optical-sizing: auto;
   font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
 .stat-label {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.07em;
 }
 
-.stat.verified .stat-value {
-  color: var(--verified);
-}
-.stat.divergent .stat-value {
-  color: var(--divergent);
-}
-.stat.unproven .stat-value {
-  color: var(--unproven);
-}
-.stat.not-executed .stat-value {
-  color: var(--not-executed);
-}
+.stat.verified     .stat-value { color: var(--verified); }
+.stat.divergent    .stat-value { color: var(--divergent); }
+.stat.unproven     .stat-value { color: var(--unproven); }
+.stat.not-executed .stat-value { color: var(--not-executed); }
 
 /* --- meta --- */
 .meta dl {
@@ -104,7 +152,7 @@ a {
   grid-template-columns: auto 1fr;
   gap: 0.35rem 1.25rem;
   margin: 0 0 2rem;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 }
 
 .meta dt {
@@ -120,21 +168,21 @@ a {
   background: var(--panel);
   border: 1px solid var(--border);
   border-left: 3px solid var(--unproven);
-  border-radius: 0.5rem;
+  border-radius: 0.4rem;
   padding: 1rem 1.25rem;
   margin-bottom: 2rem;
 }
 
 .notice p {
   margin: 0.5rem 0 0;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 }
 
 /* --- table --- */
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
 }
 
 th {
@@ -142,10 +190,10 @@ th {
   padding: 0.6rem 0.75rem;
   border-bottom: 1px solid var(--border);
   color: var(--muted);
-  font-weight: 500;
-  font-size: 0.78rem;
+  font-weight: 400;
+  font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.07em;
 }
 
 td {
@@ -160,37 +208,105 @@ tbody tr:hover {
 
 .verdict {
   display: inline-block;
-  padding: 0.15rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.72rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.2rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
   font-weight: 600;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.08em;
   border: 1px solid currentColor;
 }
 
-.verdict.verified {
-  color: var(--verified);
+.verdict.verified    { color: var(--verified); }
+.verdict.divergent   { color: var(--divergent); }
+.verdict.unproven    { color: var(--unproven); }
+.verdict.not-executed { color: var(--not-executed); }
+
+.reason-code {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.66rem;
+  color: var(--muted);
+  letter-spacing: 0.03em;
 }
-.verdict.divergent {
-  color: var(--divergent);
+
+/* --- executed through KeeperHub --- */
+.keeperhub {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--verified);
+  border-radius: 0.4rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 2rem;
 }
-.verdict.unproven {
-  color: var(--unproven);
+
+.keeperhub h2 {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display, Georgia), serif;
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
 }
-.verdict.not-executed {
-  color: var(--not-executed);
+
+.keeperhub p {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  max-width: 52rem;
+}
+
+.keeperhub .commands {
+  margin-bottom: 0;
+}
+
+.unreadable-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  border-left: 3px solid var(--unproven);
+  padding-left: 0.75rem;
+}
+
+/* --- pagination --- */
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.page-link {
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color 0.12s ease;
+}
+
+.page-link:hover {
+  border-color: var(--link);
+}
+
+.page-link.disabled {
+  color: var(--muted);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.page-status {
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
 }
 
 footer {
   margin-top: 2.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--border);
-  font-size: 0.88rem;
+  font-size: 0.875rem;
 }
 
-/* --- copyable values ------------------------------------------------------
-   Every hash on this page exists to be checked somewhere else, so copying is
-   a primary action rather than a convenience. */
+/* --- copyable values -------------------------------------------------------
+   Every hash exists to be checked somewhere else — copying is primary. */
 
 .copyable {
   display: inline-flex;
@@ -202,12 +318,12 @@ footer {
   border: 1px solid var(--border, #2a2a35);
   background: transparent;
   color: inherit;
-  opacity: 0.55;
-  border-radius: 4px;
+  opacity: 0.45;
+  border-radius: 3px;
   padding: 0.05rem 0.35rem;
-  font: inherit;
-  font-size: 0.68rem;
-  letter-spacing: 0.03em;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
   cursor: pointer;
   transition: opacity 0.12s ease, border-color 0.12s ease;
 }
@@ -227,10 +343,12 @@ footer {
 
 .detail-row summary {
   cursor: pointer;
-  font-size: 0.8rem;
-  opacity: 0.6;
+  font-size: 0.76rem;
+  opacity: 0.5;
   padding: 0.25rem 0;
   user-select: none;
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 0.02em;
 }
 
 .detail-row summary:hover {
@@ -270,7 +388,7 @@ footer {
 
 .command-label {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   opacity: 0.55;
   margin-bottom: 0.2rem;
 }
@@ -281,7 +399,7 @@ footer {
 }
 
 .copyable.command code {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   line-height: 1.5;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
