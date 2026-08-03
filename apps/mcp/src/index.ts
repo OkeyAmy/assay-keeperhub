@@ -33,10 +33,13 @@ const pool = new RpcPool(config.chain.id, config.observer);
 const khClient = config.keeperhub.apiKey ? new KeeperHubClient(config.keeperhub) : undefined;
 const audit = khClient ? new AuditCollector(khClient) : undefined;
 const executor = khClient ? new DirectExecutor(khClient) : undefined;
-const registries =
-  executor && config.contracts.receiptRegistry
-    ? new Registries(executor, pool, config.contracts, config.chain.id)
-    : undefined;
+// Built from the registry addresses alone. `executor` may be undefined here —
+// every tool this server exposes is a chain read, and requiring the executor's
+// API key to read would make the independent path depend on the party being
+// verified. A caller with only RPC_URLS gets the full read surface.
+const registries = config.contracts.receiptRegistry
+  ? new Registries(executor, pool, config.contracts, config.chain.id)
+  : undefined;
 
 const server = new McpServer({ name: 'assay', version: '0.1.0' });
 
@@ -184,7 +187,7 @@ server.registerTool(
     inputSchema: { intentHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/) },
   },
   async ({ intentHash }) => {
-    if (!registries) return text({ error: 'INTENT_REGISTRY / KH_API_KEY not configured' });
+    if (!registries) return text({ error: 'INTENT_REGISTRY is not configured' });
     return text({
       intentHash,
       committed: await registries.isCommitted(intentHash as `0x${string}`),
@@ -204,7 +207,7 @@ server.registerTool(
     inputSchema: { verifier: z.string().regex(/^0x[0-9a-fA-F]{40}$/) },
   },
   async ({ verifier }) => {
-    if (!registries) return text({ error: 'RECEIPT_REGISTRY / KH_API_KEY not configured' });
+    if (!registries) return text({ error: 'RECEIPT_REGISTRY is not configured' });
     const address = verifier as `0x${string}`;
     const [summary, head, total] = await Promise.all([
       registries.summary(address),

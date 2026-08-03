@@ -35,6 +35,13 @@ export interface ChainConfig {
 export interface ContractsConfig {
   intentRegistry?: Address;
   receiptRegistry?: Address;
+  /**
+   * The verifier whose receipt chain this deployment owns — the KeeperHub org
+   * wallet that executes. Optional: reads work without it, but knowing it lets
+   * a reader ask the registry for a verdict tally directly (`summary(address)`)
+   * instead of walking every receipt to count them.
+   */
+  verifier?: Address;
 }
 
 export interface AgentConfig {
@@ -169,6 +176,7 @@ export function loadConfig(env: Env = process.env): AssayConfig {
     contracts: {
       intentRegistry: address(env, 'INTENT_REGISTRY'),
       receiptRegistry: address(env, 'RECEIPT_REGISTRY'),
+      verifier: address(env, 'ORG_WALLET_ADDRESS'),
     },
     agent: {
       maxExecutionsPerDay: int(env, 'MAX_EXECUTIONS_PER_DAY', 200),

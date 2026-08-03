@@ -131,11 +131,26 @@ export const RECEIPT_REGISTRY_ABI = [
  */
 export class Registries {
   constructor(
-    private readonly executor: DirectExecutor,
+    /**
+     * Undefined when only the read path is configured. Reads never touch this,
+     * so a caller holding nothing but RPC endpoints can still check
+     * commitments and walk the receipt chain — requiring the executor's
+     * credentials to *read* would make the independent path depend on the
+     * party being verified.
+     */
+    private readonly directExecutor: DirectExecutor | undefined,
     private readonly pool: RpcPool,
     private readonly addresses: ContractsConfig,
     private readonly chainId: number,
   ) {}
+
+  /** The write path. Every registry write goes through KeeperHub, or nowhere. */
+  private get executor(): DirectExecutor {
+    if (!this.directExecutor) {
+      throw new Error('KH_API_KEY is not configured; registry writes go through KeeperHub');
+    }
+    return this.directExecutor;
+  }
 
   private get intentRegistry(): Address {
     const address = this.addresses.intentRegistry;
