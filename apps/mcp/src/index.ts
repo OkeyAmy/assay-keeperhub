@@ -2,6 +2,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
+import { decodeFunctionData, parseAbi } from 'viem';
 import {
   enableDualStackFallback,
   explorerTxUrl,
@@ -92,6 +93,64 @@ function toIntent(raw: z.infer<typeof intentSchema>): Intent {
   };
 }
 
+/**
+ * Turn a committed intent into the plain-language description a caller like
+ * Claude would actually want to say out loud.
+ *
+ * The gap this closes: `assay_verify` takes the full intent as raw
+ * chain/target/selector/args/bounds, verifies against it, and used to return
+ * only the verdict and the transaction hash — leaving nothing readable for the
+ * calling agent to narrate except "the tx did X or didn't." The intent itself
+ * *is* the human-meaningful part (what was promised), so it is decoded here
+ * rather than left as bytes.
+ *
+ * The call itself (function name and arguments) can only be named if the
+ * caller supplies how to read it — a 4-byte selector alone is not reversible.
+ * Without one, the calldata is shown as bytes rather than guessed at; a wrong
+ * guess at what a call does is worse than an honest "not decoded."
+ */
+function describeIntent(intent: Intent, functionSignature?: string): Record<string, unknown> {
+  const deadlineIso = new Date(Number(intent.deadline) * 1000).toISOString();
+
+  let call: string;
+  if (functionSignature) {
+    try {
+      // viem validates ABI signatures at the type level via a template-literal
+      // brand, which only works for string literals known at compile time.
+      // This one arrives at runtime from the caller, so the cast is required;
+      // parseAbi still throws at runtime on a malformed signature, which the
+      // catch below turns into an honest "not decoded" instead of a crash.
+      const abi = parseAbi([`function ${functionSignature}`] as readonly string[]);
+      const data = `${intent.selector}${intent.args.slice(2)}` as `0x${string}`;
+      const decoded = decodeFunctionData({ abi, data });
+      call = `${decoded.functionName}(${(decoded.args ?? []).map(String).join(', ')})`;
+    } catch (error) {
+      call = `${intent.selector} (given signature did not match the calldata: ${
+        error instanceof Error ? error.message : String(error)
+      })`;
+    }
+  } else {
+    call = `${intent.selector} (pass functionSignature, e.g. "transfer(address to, uint256 amount)", to decode this)`;
+  }
+
+  return {
+    chainId: intent.chainId,
+    target: intent.target,
+    call,
+    nativeValueWei: intent.value.toString(),
+    declaredEffects: {
+      balanceDeltas: intent.bounds.balanceDeltas.map((d) => ({
+        token: d.token,
+        account: d.account,
+        expectedDelta: `[${d.min}, ${d.max}] wei`,
+      })),
+      requiredEventTopics: intent.bounds.requiredTopics,
+      maxGasUsed: intent.bounds.maxGasUsed.toString(),
+    },
+    deadline: deadlineIso,
+  };
+}
+
 function text(value: unknown) {
   return {
     content: [{ type: 'text' as const, text: JSON.stringify(value, bigintReplacer, 2) }],
@@ -121,14 +180,23 @@ server.registerTool(
     inputSchema: {
       executionId: z.string().describe('KeeperHub execution id, e.g. direct_123'),
       intent: intentSchema.describe('The intent the execution was supposed to fulfil'),
+      functionSignature: z
+        .string()
+        .optional()
+        .describe(
+          'Optional, e.g. "transfer(address to, uint256 amount)". Lets the response name the ' +
+            'call instead of showing only its raw 4-byte selector — the selector alone cannot ' +
+            'be reversed into a function name.',
+        ),
     },
   },
-  async ({ executionId, intent: rawIntent }) => {
+  async ({ executionId, intent: rawIntent, functionSignature }) => {
     if (!audit) {
       return text({ error: 'KH_API_KEY is not configured; cannot read the audit trail' });
     }
 
     const intent = toIntent(rawIntent);
+    const intentSummary = describeIntent(intent, functionSignature);
     const status = await audit.getStatus(executionId);
 
     const trail = {
@@ -148,6 +216,9 @@ server.registerTool(
     const verdict = reconcile(intent, trail, observation);
 
     return text({
+      // Listed first on purpose: this is what a promise was made to do — the
+      // thing an agent narrating this result should say before the verdict.
+      intent: intentSummary,
       verdict: verdict.kind,
       reason: verdict.reason,
       detail: verdict.detail,
@@ -170,9 +241,21 @@ server.registerTool(
       'Returns the canonical intent hash used for onchain commitment. Bounds are ' +
       'sorted before hashing, so logically identical intents hash identically ' +
       'regardless of field order.',
-    inputSchema: { intent: intentSchema },
+    inputSchema: {
+      intent: intentSchema,
+      functionSignature: z
+        .string()
+        .optional()
+        .describe('Optional, e.g. "transfer(address to, uint256 amount)", to name the call in the response.'),
+    },
   },
-  async ({ intent }) => text({ intentHash: hashIntent(toIntent(intent)) }),
+  async ({ intent, functionSignature }) => {
+    const built = toIntent(intent);
+    return text({
+      intentHash: hashIntent(built),
+      intent: describeIntent(built, functionSignature),
+    });
+  },
 );
 
 /** Was this intent committed before it was executed? */

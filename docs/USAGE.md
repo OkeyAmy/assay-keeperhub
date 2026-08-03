@@ -101,6 +101,23 @@ repo.
 claude mcp add assay -- pnpm --filter @assay/mcp start
 ```
 
+### What "intent" means here
+
+Not a free-text description — an **intent** is the pre-committed promise: chain,
+target contract, function selector, encoded arguments, native value, and
+declared effect bounds (balance deltas, required event topics, a gas cap). It is
+hashed and written onchain *before* execution, which is what turns "the agent
+meant to do this" from a claim into something checkable.
+
+Assay does not invent the intent — it cannot, without giving up the
+independence the whole product rests on. **The caller supplies it**, because the
+caller is asserting "this is what was promised" and Assay's job is to check that
+assertion against two things it does *not* trust each other: KeeperHub's audit
+trail and an independent chain read. If you call `assay_verify` with no
+meaningful intent, there is nothing for it to check — you get a tx hash and a
+verdict about nothing in particular, which is exactly the "showed the tx but not
+the intent" gap you ran into.
+
 ### `assay_verify`
 
 The headline tool. Verify **anyone's** KeeperHub execution — you need not be the
@@ -125,15 +142,35 @@ party that executed it.
     "deadline": "1800000000",
     "nonce": "1",
     "policyHash": "0x11…"
-  }
+  },
+  "functionSignature": "transfer(address to, uint256 amount)"
 }
 ```
 
-Returns the verdict, the per-check breakdown, an explorer link, and — crucially —
-how many independent providers backed the conclusion:
+`functionSignature` is optional and new: without it, `selector` is 4 raw bytes
+that cannot be reversed into a name, so the response says so honestly rather
+than guessing. With it, the response decodes the call.
+
+Returns the intent **decoded into plain language first**, then the verdict, the
+per-check breakdown, an explorer link, and how many independent providers
+backed the conclusion:
 
 ```json
 {
+  "intent": {
+    "chainId": 11155111,
+    "target": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "call": "transfer(0xD59F14BC356eDb9612265a4797f9cA5a2865B951, 1000000)",
+    "nativeValueWei": "0",
+    "declaredEffects": {
+      "balanceDeltas": [
+        { "token": "0x1c7D…", "account": "0x39D4…", "expectedDelta": "[-1000000, -1000000] wei" }
+      ],
+      "requiredEventTopics": ["0xddf252ad…"],
+      "maxGasUsed": "250000"
+    },
+    "deadline": "2027-01-15T08:00:00.000Z"
+  },
   "verdict": "DIVERGENT",
   "reason": "CALLDATA_MISMATCH",
   "detail": "executed calldata does not match the committed intent",
@@ -145,6 +182,29 @@ how many independent providers backed the conclusion:
 
 `assay_verify` is the one tool that needs `KH_API_KEY`, because reading the
 executor's audit trail is the one thing only the executor can serve.
+
+### Using this from Claude
+
+Register it once — `claude mcp add assay -- pnpm --filter @assay/mcp start` —
+then ask in plain language. The intent, execution id and tx below are real —
+from `pnpm run agent:once` against this live deployment — reshaped here into
+what asking through Claude looks like, rather than the raw stdio JSON-RPC:
+
+> **You:** Verify execution `oysll99a6p3zbh6uvusji` against the intent
+> `{chainId: 11155111, target: 0x1c7D…, selector: 0xa9059cbb, args: 0x000…,
+> value: 0, bounds: {balanceDeltas: [...], requiredTopics: [...], maxGasUsed:
+> 250000}, deadline: ..., nonce: 1, policyHash: ...}`, function signature
+> `transfer(address to, uint256 amount)`.
+>
+> **Claude** calls `assay_verify` and gets back the JSON above, then answers:
+> "This was a promise to call `transfer(0xD59F…, 1000000)` on `0x1c7D…`,
+> declaring the caller's balance would move by exactly -1,000,000. KeeperHub
+> executed it, 3 independent providers corroborate the chain state, and the
+> verdict is **VERIFIED** — the transaction did what was promised."
+
+Nothing in that answer came from trusting KeeperHub's report alone: the intent
+came from what you supplied, and the verdict came from reconciling it against a
+chain read through providers KeeperHub does not control.
 
 ### The other tools
 
