@@ -1,16 +1,31 @@
 # Assay — Proof of Execution for Onchain Agents
 
-> **x402 pays an agent for a promise. Assay proves the promise was kept.**
->
-> Assay commits an agent's intent onchain _before_ KeeperHub executes, then
-> reconciles KeeperHub's own audit trail against chain state read through
-> _different_ providers, and writes a hash-chained pass/fail receipt onchain —
-> also through KeeperHub.
+AI agents are starting to submit real onchain transactions — payments, swaps,
+contract calls — on someone's behalf. **[KeeperHub](https://keeperhub.com)** is
+the execution platform that runs those transactions and reports back what
+happened. That report is *self-reported* — written by the same system that did
+the work — which makes it useful for operations but not proof.
 
-The reconciler is [four checks](#the-four-checks), open in `packages/core/src/reconcile.ts` —
-existence, conformance, effect, liveness — plus **156 tests** (121 TypeScript/Vitest +
-35 Solidity/Foundry, incl. 6 fuzz suites at 1,000 runs each) proving they hold. All green.
-Built for the [KeeperHub "Agents Onchain" hackathon](https://dorahacks.io/hackathon/agents-onchain/detail).
+**Assay is an independent auditor for that report.** It writes down what an
+agent intends to do *before* KeeperHub executes it, then reads the real
+blockchain back through providers that have nothing to do with KeeperHub, and
+publishes a pass/fail verdict onchain either way — including an honest "I
+can't tell" when the evidence doesn't support a verdict.
+
+> **x402** (a standard letting an agent pay per API call instead of holding an
+> account) **pays an agent for a promise. Assay proves the promise was kept.**
+>
+> Assay commits an agent's **intent** — a hash of what it's about to do —
+> onchain _before_ KeeperHub executes, then reconciles KeeperHub's own
+> **audit trail** (its self-reported execution log) against chain state read
+> through _different_ providers, and writes a hash-chained pass/fail
+> **receipt** onchain — also through KeeperHub.
+
+The reconciler — the component that makes this call — runs [four checks](#the-four-checks),
+open in `packages/core/src/reconcile.ts`: existence, conformance, effect,
+liveness. **156 tests** (121 TypeScript/Vitest + 35 Solidity/Foundry, incl. 6
+fuzz suites at 1,000 runs each) prove they hold. All green. Built for the
+[KeeperHub "Agents Onchain" hackathon](https://dorahacks.io/hackathon/agents-onchain/detail).
 
 **Live dashboard:** [assay-keeperhub.okeyamy.xyz](https://assay-keeperhub.okeyamy.xyz/) — see it running against real Sepolia infrastructure, nothing to install.
 
@@ -40,7 +55,8 @@ KeeperHub solved the last mile: a decision becomes a transaction that lands. But
    by design — so a calling agent pays USDC into logic it cannot inspect.
 
 Assay is the independent verify layer. It is the third leg of the read/execute
-split KeeperHub and Blockscout [argued for](https://keeperhub.com/blog/011-detect-decide-execute-blockscout):
+split KeeperHub and Blockscout (a blockchain-data/explorer API) [argued
+for](https://keeperhub.com/blog/011-detect-decide-execute-blockscout):
 **the thing checking the executor is not the executor.**
 
 ## How it works
@@ -63,6 +79,12 @@ split KeeperHub and Blockscout [argued for](https://keeperhub.com/blog/011-detec
    └───────────────────────────────────────────────────────────────┘
 ```
 
+**Direct Exec** above is KeeperHub's Direct Execution API — the endpoint that
+actually submits a transaction on the agent's behalf. The observer's reads go
+through Blockscout plus an **RPC quorum**: several independent blockchain-data
+providers queried together, so no single provider's outage or bad answer can
+pass as agreement.
+
 **Three KeeperHub-executed transactions per cycle**: intent commitment, the
 value-moving action, the verification receipt.
 
@@ -74,6 +96,11 @@ value-moving action, the verification receipt.
 | **Conformance** | Template-binding bugs, stale `{{...}}` refs, decimal errors, wrong recipient                                                      | `DIVERGENT`        |
 | **Effect**      | "Success" on a tx that reverted or was a no-op; balance deltas outside declared bounds                                            | `DIVERGENT`        |
 | **Liveness**    | Retries replaying a cached failure and never resubmitting ([KeeperHub #1840](https://github.com/KeeperHub/keeperhub/issues/1840)) | `DIVERGENT`        |
+
+*Sponsored/7702 execution: a transaction paid for by someone other than the
+agent's own wallet, or bundled via EIP-7702 account delegation — KeeperHub
+doesn't always return a transaction hash for these, which is why Existence
+treats a missing hash as unproven rather than failed.*
 
 `UNPROVEN` is a first-class answer. A verifier that cannot say _"I could not
 tell"_ will eventually say `VERIFIED` when it means `UNPROVEN`, and at that
@@ -130,8 +157,9 @@ on faith a claim that a later rung would settle.
 **[assay-keeperhub.okeyamy.xyz](https://assay-keeperhub.okeyamy.xyz/)**
 
 Every row is a real verdict on a real Sepolia execution. Expand any receipt's
-**"Verify this receipt yourself"** panel: it hands you a `cast call` that reads
-the same registry the page just read, straight from chain. Run it and you have
+**"Verify this receipt yourself"** panel: it hands you a `cast call` — a
+read-only command from Foundry's CLI, no wallet needed — that reads the same
+registry the page just read, straight from chain. Run it and you have
 checked the page instead of trusting it — which is the point, because a
 tamper-evidence tool you can only inspect through its own UI has not evidenced
 anything.
@@ -198,8 +226,10 @@ pnpm verify          # boundaries + 156 tests + gauntlet
 
 ### 4. Clone + `RPC_URLS` — the MCP server
 
-Assay's read surface is an MCP server, so another agent can consume verdicts
-without cloning anything. **Four of its five tools need no KeeperHub account** —
+Assay's read surface is an **MCP server** — Model Context Protocol, a standard
+interface that lets other AI agents call Assay's tools programmatically — so
+another agent can consume verdicts without cloning anything. **Four of its
+five tools need no KeeperHub account** —
 they are chain reads, and requiring the executor's credentials to *read* would
 make the independent path depend on the party being verified:
 
@@ -289,7 +319,9 @@ The central claim is enforced structurally, not documented and hoped for.
 ## KeeperHub surfaces used
 
 Stated as built, not as intended. A verifier that overstates its own coverage
-has picked a strange hill to die on.
+has picked a strange hill to die on. (**MPP** is KeeperHub's alternate
+payment-settlement path, via **Tempo**, a chain it also settles on. **ERC-8004**
+is an onchain agent-reputation registry standard.)
 
 | Surface                            | Status          | Where                                                                                                                                                                                                      |
 | ---------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -416,26 +448,26 @@ deterministic and the model only explains results.
 ## Disclosure
 
 This repository began from an earlier personal project of mine — an
-ERC-8004/ERC-7857 agent trust passport — and reuses scaffolding from it:
+ERC-8004/ERC-7857 agent trust passport (an onchain agent-identity/reputation
+standard) — and reuses scaffolding from it:
 
 - the Foundry harness and `foundry.toml`
-- EIP-712 hashing helpers
+- EIP-712 hashing helpers (a standard for structured, human-readable signed messages)
 - the Next.js application shell
 - CI workflow configuration
 
-        `ReceiptRegistry.sol` is a **rewrite**, informed by that project's ERC-8004
+`ReceiptRegistry.sol` is a **rewrite**, informed by that project's ERC-8004
+`ValidationRegistry` but sharing no logic with it.
 
-  `ValidationRegistry` but sharing no logic with it.
+Everything the submission is actually judged on is new for this hackathon: the
+reconciler and its four checks, the KeeperHub integration, the independent
+observer, both registry contracts, the agent cycle, and the marketplace
+workflow.
 
-  Everything the submission is actually judged on is new for this hackathon: the
-  reconciler and its four checks, the KeeperHub integration, the independent
-  observer, both registry contracts, the agent cycle, and the marketplace
-  workflow.
-
-  The predecessor's source is **not** vendored here. Carrying ~140 files of dead
-  code purely to evidence a disclosure would make the repository harder to review
-  for no benefit, and the reuse above is stated precisely enough to check against
-  the git history.
+The predecessor's source is **not** vendored here. Carrying ~140 files of dead
+code purely to evidence a disclosure would make the repository harder to review
+for no benefit, and the reuse above is stated precisely enough to check against
+the git history.
 
 ## License
 

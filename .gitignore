@@ -208,3 +208,4 @@ docs/DEMO.md
 # to these paths. Neither belongs in a public repo.
 contracts/broadcast/
 contracts/cache/
+demo-video/
