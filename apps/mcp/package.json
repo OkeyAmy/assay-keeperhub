@@ -19,7 +19,7 @@
     "@assay/core": "workspace:*",
     "@assay/keeperhub": "workspace:*",
     "@assay/observer": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.31.0",
     "viem": "^2.52.2",
     "zod": "^4.4.3"
   },
