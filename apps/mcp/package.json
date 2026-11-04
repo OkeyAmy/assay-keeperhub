@@ -21,7 +21,7 @@
     "@assay/observer": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "viem": "^2.52.2",
-    "zod": "^4.4.3"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "tsx": "^4.22.4",
